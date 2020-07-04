@@ -10,54 +10,204 @@ provider "aci" {
 }
 
 #####
-# start from lower level and up
-# section 1 - fabric policy
+# Goal - to setup fabric to useable state to be ready for l3out & overlay policies
 #####
-
-# start with the basics
+# ** can't find below terraform resources so did it manually but leave them here for references to fabric init steps
 # - route reflector policy: terraform can't do this one yet
-# site 1 = 65001
-# site 2 = 65002
 # - OOB management IP address
 # - DNS policy
 # - time zone
-
-
 # NTP policy
-# route reflector
-# BGP
+#####
+# this script will do
+# - register node fabric membership
+# - populate common fabric access policies (link_level, cdp, lldp, port_channel)
+# - .. also vlan pool, physical domain (l3out will stick to a tenant)
+# - populate leaf switch + interface profile according to node fabric membership
+# - create vpc policy, AEP and apply to interfaces
 
+# great list of data and resources:
+# https://github.com/terraform-providers/terraform-provider-aci/tree/master/aci
 
-# start with fabric membership
-resource "aci_fabric_node_member" "irv-aci2-n101" {
+#===== node fabric membership and vpc protection group
+
+resource "aci_fabric_node_member" "irvsdc2-aci-n101" {
   serial  = "FDO22181CK7"
   pod_id  = "1"
   node_id = "101"
-  name    = "irv-aci2-n101"
-  role    = "spine"
+  name    = "irvsdc2-aci-n101"
+  # role    = "spine"
 }
 
-resource "aci_fabric_node_member" "irv-aci2-n102" {
+resource "aci_fabric_node_member" "irvsdc2-aci-n102" {
   serial  = "FDO22350P3U"
   pod_id  = "1"
   node_id = "102"
-  name    = "irv-aci2-n102"
-  role    = "spine"
+  name    = "irvsdc2-aci-n102"
+  # role    = "spine"
 }
 
-resource "aci_fabric_node_member" "irv-aci2-n201" {
+resource "aci_fabric_node_member" "irvsdc2-aci-n201" {
   serial  = "FDO22273SZD"
   pod_id  = "1"
   node_id = "201"
-  name    = "irv-aci2-n201"
-  role    = "leaf"
+  name    = "irvsdc2-aci-n201"
+  # role    = "leaf"
 }
 
-resource "aci_fabric_node_member" "irv-aci2-n202" {
+resource "aci_fabric_node_member" "irvsdc2-aci-n202" {
   serial  = "FDO21270V6D"
   pod_id  = "1"
   node_id = "202"
-  name    = "irv-aci2-n202"
-  role    = "leaf"
+  name    = "irvsdc2-aci-n202"
+  # role    = "leaf"
 }
 
+resource "aci_vpc_explicit_protection_group" "leaf-201-202_vpcgrp" {
+  name = "leaf-201-202_vpcgrp"
+  switch1 = "201"
+  switch2 = "202"
+  vpc_explicit_protection_group_id = "201"
+}
+
+#===== populate common fabric access policies
+# (link_level, cdp, lldp, port_channel)
+# no link_leve policy so let's see if it'll work on default
+
+resource "aci_cdp_interface_policy" "cdp-on" {
+  name = "cdp-on"
+  admin_st = "enabled"
+}
+
+resource "aci_cdp_interface_policy" "cdp-off" {
+  name = "cdp-off"
+  admin_st = "disabled"
+}
+
+resource "aci_lldp_interface_policy" "lldp-on" {
+  name = "lldp-on"
+  admin_rx_st = "enabled"
+  admin_tx_st = "disabled"
+}
+
+resource "aci_lldp_interface_policy" "lldp-off" {
+  name = "lldp-on"
+  admin_rx_st = "enabled"
+  admin_tx_st = "disabled"
+}
+
+resource "aci_lacp_policy" "lacp-active" {
+  name = "lacp-active"
+  ctrl = "fast-sel-hot-stdby,graceful-conv,susp-individual,symmetric-hash"
+  mode = "active"
+}
+
+#===== create vlan pools and physical domain
+
+resource "aci_vlan_pool" "irvsdc2_vlpool" {
+  name = "irvsdc2_vlpool"
+  alloc_mode = "dynamic"
+}
+
+resource "aci_ranges" "vlpool1" {
+  vlan_pool_dn = aci_vlan_pool.irvsdc2_vlpool.id
+  _from = "vlan-100"
+  to = "vlan-1000"
+  alloc_mode = "static"
+  description = "static vlan range"
+  role = "external"
+}
+
+resource "aci_ranges" "vlpool2" {
+  vlan_pool_dn = aci_vlan_pool.irvsdc2_vlpool.id
+  _from = "vlan-1001"
+  to = "vlan-3000"
+  alloc_mode = "dynamic"
+  description = "dynamic vlan range"
+  role = "external"
+}
+
+resource "aci_physical_domain" "irvsdc2_physdom" {
+  name = "irvsdc2_physdom"
+  relation_infra_rs_vlan_ns = aci_vlan_pool.irvsdc2_vlpool.id
+}
+
+#===== populate leaf switch + interface profile
+
+resource "aci_leaf_interface_profile" "leaf-201-202" {
+  name = "leaf-201-202"
+}
+
+resource "aci_leaf_profile" "leaf-201-202" {
+  name = "leaf-201-202"
+  relation_infra_rs_acc_port_p = [aci_leaf_interface_profile.leaf-201-202.id]
+}
+
+resource "aci_switch_association" "leaf-201-202" {
+  leaf_profile_dn = aci_leaf_profile.leaf-201-202.id
+  name = "leaf-201-202"
+  switch_association_type = "range"
+  relation_infra_rs_acc_node_p_grp = aci_leaf_interface_profile.leaf-201-202.id
+}
+
+resource "aci_node_block" "leaf-201-202" {
+  switch_association_dn = aci_switch_association.leaf-201-202.id
+  name = "leaf-201-202"
+  from_ = "201"
+  to_ = "202"
+}
+
+#===== create vpc policy, AEP and apply to interfaces
+# - AEP
+# - interface policy group
+# - interface selector
+
+resource "aci_attachable_access_entity_profile" "irvsdc2-isn_aep" {
+  name = "irvsdc2-isn_aep"
+  relation_infra_rs_dom_p = [aci_physical_domain.irvsdc2_physdom.id]
+}
+
+resource "aci_pcvpc_interface_policy_group" "irvsdc2-isn1_vpcipg" {
+  name = "irvsdc2-isn1_vpcipg"
+  lag_t = "node"
+  relation_infra_rs_lldp_if_pol = aci_lldp_interface_policy.lldp-on.id
+  relation_infra_rs_lacp_pol = aci_lacp_policy.lacp-active.id
+  relation_infra_rs_cdp_if_pol = aci_cdp_interface_policy.cdp-on.id
+  relation_infra_rs_att_ent_p = aci_attachable_access_entity_profile.irvsdc2-isn_aep.id
+}
+
+resource "aci_pcvpc_interface_policy_group" "irvsdc2-isn2_vpcipg" {
+  name = "irvsdc2-isn2_vpcipg"
+  lag_t = "node"
+  relation_infra_rs_lldp_if_pol = aci_lldp_interface_policy.lldp-on.id
+  relation_infra_rs_lacp_pol = aci_lacp_policy.lacp-active.id
+  relation_infra_rs_cdp_if_pol = aci_cdp_interface_policy.cdp-on.id
+}
+
+resource "aci_access_port_selector" "n201-202_e41" {
+  leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
+  name = "e41"
+  access_port_selector_type = "range"
+  relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-isn1_vpcipg.id
+}
+
+resource "aci_access_port_block" "n201-202_e41" {
+  access_port_selector_dn = aci_access_port_selector.n201-202_e41.id
+  name = "e41"
+  from_port = "41"
+  to_port = "41"
+}
+
+resource "aci_access_port_selector" "n201-202_e42" {
+  leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
+  name = "e42"
+  access_port_selector_type = "range"
+  relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-isn2_vpcipg.id
+}
+
+resource "aci_access_port_block" "n201-202_e42" {
+  access_port_selector_dn = aci_access_port_selector.n201-202_e42.id
+  name = "e42"
+  from_port = "42"
+  to_port = "42"
+}
