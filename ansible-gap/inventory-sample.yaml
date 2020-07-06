@@ -1,0 +1,86 @@
+apic:
+  hosts:
+    irv-apic11:
+      apic_host: "<your_apic_hostname_or_ip>"
+      apic_username: "admin"
+      apic_password: "<your_apic_password>"
+  vars:
+    apic_use_proxy: no
+    apic_validate_certs: no
+
+
+    fabric_policy:
+      aci_fabric_node:
+      - name: "irv-aci2-n101"
+        serial: "FDO22181CK7"
+        pod_id: "1"
+        node_id: "101"
+        role: "spine"
+        state: "present"
+      - name: "irv-aci2-n102"
+        serial: "FDO22350P3U"
+        pod_id: "1"
+        node_id: "102"
+        role: "spine"
+        state: "present"
+      - name: "irv-aci2-n201"
+        serial: "FDO22273SZD"
+        pod_id: "1"
+        node_id: "201"
+        role: "leaf"
+        state: "present"
+      - name: "irv-aci2-n202"
+        serial: "FDO21270V6D"
+        pod_id: "1"
+        node_id: "202"
+        role: "leaf"
+        state: "present"
+      vpc_protection_group:
+      - protection_group: "leaf-201-202.VPCGrp"
+        protection_group_id: "201"
+        switch_1_id: "201"
+        switch_2_id: "202"
+        state: "present"
+    
+    fabric_access_policy:
+      interface_link_level:
+      - name: "auto-1g"
+        autoneg: "on"
+        speed: "1G"
+        state: "present"
+      - name: "auto-10g"
+        autoneg: "on"
+        speed: "10G"
+        state: "present"
+      - name: "auto-40g"
+        autoneg: "on"
+        speed: "40G"
+        state: "present"
+      interface_policy_cdp:
+      - name: "cdp-on"
+        admin_state: yes
+        state: "present"
+      - name: "cdp-off"
+        admin_state: no
+        state: "present"
+      interface_policy_lldp:
+      - name: "lldp-on"
+        receive_state: yes
+        transmit_state: yes
+        state: "present"
+      - name: "lldp-off"
+        receive_state: yes
+        transmit_state: yes
+        state: "present"
+      interface_policy_port_channel:
+      - name: "lacp-active"
+        mode: "active"
+        fast_select: yes
+        graceful_convergence: yes
+        suspend_individual: yes
+        symmetric_hash: yes
+        state: "present"
+
+    # overlay_policy: > Terraform
+
+    # group_based_policy: > Terraform
