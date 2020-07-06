@@ -157,16 +157,18 @@ resource "aci_node_block" "leaf-201-202" {
   to_ = "202"
 }
 
-#===== create vpc policy, AEP and apply to interfaces
+#===== create vpc policy, AEP and apply to interfaces: for irvsdc2-isn1&2
 # - AEP
 # - interface policy group
 # - interface selector
 
+# create AEP, associate it to a domain
 resource "aci_attachable_access_entity_profile" "irvsdc2-isn_aep" {
   name = "irvsdc2-isn_aep"
-  relation_infra_rs_dom_p = [aci_physical_domain.irvsdc2_physdom.id]
+  relation_infra_rs_dom_p = [aci_physical_domain.irvsdc2_physdom.id,aci_l3_domain_profile.irvsdc-isn_l3dom.id]
 }
 
+# create vpc interface port group, give it policies, associate to AEP for isn1
 resource "aci_pcvpc_interface_policy_group" "irvsdc2-isn1_vpcipg" {
   name = "irvsdc2-isn1_vpcipg"
   lag_t = "node"
@@ -176,14 +178,17 @@ resource "aci_pcvpc_interface_policy_group" "irvsdc2-isn1_vpcipg" {
   relation_infra_rs_att_ent_p = aci_attachable_access_entity_profile.irvsdc2-isn_aep.id
 }
 
+# same thing for isn2
 resource "aci_pcvpc_interface_policy_group" "irvsdc2-isn2_vpcipg" {
   name = "irvsdc2-isn2_vpcipg"
   lag_t = "node"
   relation_infra_rs_lldp_if_pol = aci_lldp_interface_policy.lldp-on.id
   relation_infra_rs_lacp_pol = aci_lacp_policy.lacp-active.id
   relation_infra_rs_cdp_if_pol = aci_cdp_interface_policy.cdp-on.id
+  relation_infra_rs_att_ent_p = aci_attachable_access_entity_profile.irvsdc2-isn_aep.id
 }
 
+# create port selector, associate to interface port group, isn1
 resource "aci_access_port_selector" "n201-202_e41" {
   leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
   name = "e41"
@@ -191,6 +196,7 @@ resource "aci_access_port_selector" "n201-202_e41" {
   relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-isn1_vpcipg.id
 }
 
+# create port block, associate to port selector, isn1
 resource "aci_access_port_block" "n201-202_e41" {
   access_port_selector_dn = aci_access_port_selector.n201-202_e41.id
   name = "e41"
@@ -198,6 +204,7 @@ resource "aci_access_port_block" "n201-202_e41" {
   to_port = "41"
 }
 
+# create port selector, associate to interface port group, isn1
 resource "aci_access_port_selector" "n201-202_e42" {
   leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
   name = "e42"
@@ -205,9 +212,79 @@ resource "aci_access_port_selector" "n201-202_e42" {
   relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-isn2_vpcipg.id
 }
 
+# create port block, associate to port selector, isn1
 resource "aci_access_port_block" "n201-202_e42" {
   access_port_selector_dn = aci_access_port_selector.n201-202_e42.id
   name = "e42"
   from_port = "42"
   to_port = "42"
+}
+
+#===== create vpc policy, AEP and apply to interfaces: for irvsdc2-fi1&2
+# !! make sure port e49-50,51-52 are downlinks
+# - AEP (Attachable Entity Profile)
+# - interface policy group
+# - interface selector
+
+# create AEP, associate it to a domain
+# AEP groups ports with similar policies so we only need one AEP for a pair of FI
+resource "aci_attachable_access_entity_profile" "irvsdc2-fi1_aep" {
+  name = "irvsdc2-fi1_aep"
+  relation_infra_rs_dom_p = [aci_physical_domain.irvsdc2_physdom.id]
+}
+
+# create vpc interface port group, give it policies, associate to AEP for fi1a
+# this is equivalent to vpc port group in nx-os, so we need for fi-A and one for fi-B
+resource "aci_pcvpc_interface_policy_group" "irvsdc2-fi1a_vpcipg" {
+  name = "irvsdc2-fi1a_vpcipg"
+  lag_t = "node"
+  relation_infra_rs_lldp_if_pol = aci_lldp_interface_policy.lldp-on.id
+  relation_infra_rs_lacp_pol = aci_lacp_policy.lacp-active.id
+  relation_infra_rs_cdp_if_pol = aci_cdp_interface_policy.cdp-on.id
+  # bind this to the AEP above
+  relation_infra_rs_att_ent_p = aci_attachable_access_entity_profile.irvsdc2-fi1_aep.id
+}
+
+# same thing for fi1b
+resource "aci_pcvpc_interface_policy_group" "irvsdc2-fi1b_vpcipg" {
+  name = "irvsdc2-fi1b_vpcipg"
+  lag_t = "node"
+  relation_infra_rs_lldp_if_pol = aci_lldp_interface_policy.lldp-on.id
+  relation_infra_rs_lacp_pol = aci_lacp_policy.lacp-active.id
+  relation_infra_rs_cdp_if_pol = aci_cdp_interface_policy.cdp-on.id
+  # bind this to the AEP above
+  relation_infra_rs_att_ent_p = aci_attachable_access_entity_profile.irvsdc2-fi1_aep.id
+}
+# with this we then only need to manipulate overlay policy on AEP and all the related vpc and member ports gets the connectivity
+
+# create port selector, associate to interface port group, fi1a
+resource "aci_access_port_selector" "n201-202_e51" {
+  leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
+  name = "e51"
+  access_port_selector_type = "range"
+  relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-fi1a_vpcipg.id
+}
+
+# create port block, associate to port selector, fi1a
+resource "aci_access_port_block" "n201-202_e51" {
+  access_port_selector_dn = aci_access_port_selector.n201-202_e51.id
+  name = "e51"
+  from_port = "51"
+  to_port = "51"
+}
+
+# create port selector, associate to interface port group, fi1b
+resource "aci_access_port_selector" "n201-202_e52" {
+  leaf_interface_profile_dn = aci_leaf_interface_profile.leaf-201-202.id
+  name = "e52"
+  access_port_selector_type = "range"
+  relation_infra_rs_acc_base_grp = aci_pcvpc_interface_policy_group.irvsdc2-fi1b_vpcipg.id
+}
+
+# create port block, associate to port selector, fi1b
+resource "aci_access_port_block" "n201-202_e52" {
+  access_port_selector_dn = aci_access_port_selector.n201-202_e52.id
+  name = "e52"
+  from_port = "52"
+  to_port = "52"
 }
