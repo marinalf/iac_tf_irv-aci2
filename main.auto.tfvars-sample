@@ -1,4 +1,0 @@
-apic_user     = "<your_apic_username>"
-apic_password = "<your_apic_password>"
-apic_url      = "https://<your_apic_hostname>"
-apic_insecure = true

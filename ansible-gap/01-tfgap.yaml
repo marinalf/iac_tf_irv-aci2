@@ -22,7 +22,7 @@
     aci_rest:
       <<: *aci_login
       method: "post"
-      path: "/api/node/mo/uni/infra/attentp-irvsdc2-isn_aep/gen-default.json"
+      path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
       content: {
         "infraRsFuncToEpg": {
           "attributes": {
@@ -34,6 +34,22 @@
         }
       }
   
+  - name: gap - rest-bind_aep_to_epg2
+    aci_rest:
+      <<: *aci_login
+      method: "post"
+      path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
+      content: {
+        "infraRsFuncToEpg": {
+          "attributes": {
+            "tDn": "uni/tn-irvsdc2/ap-irvsdc2-infra_ap/epg-vl709-192_168_9_0_24_epg",
+            "status": "created,modified",
+            "encap": "vlan-709"
+          },
+          "children": []
+        }
+      }
+
   - name: gap - bind l3out to vrf
     aci_rest:
       <<: *aci_login
