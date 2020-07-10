@@ -182,7 +182,7 @@ resource "aci_bridge_domain" "vl709-192_168_9_0_24_bd" {
 resource "aci_subnet" "vl709-192_168_9_0_24_subnet" {
   bridge_domain_dn = aci_bridge_domain.vl709-192_168_9_0_24_bd.id
   ip               = "192.168.9.1/24"
-  scope            = "private"
+  scope            = "public"
 }
 
 resource "aci_application_epg" "vl709-192_168_9_0_24_epg" {
