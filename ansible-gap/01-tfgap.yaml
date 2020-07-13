@@ -18,210 +18,211 @@
       validate_certs: "{{ apic_validate_certs }}"
 
   tasks:
-  - name: gap - rest-bind_aep_to_epg1
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
-      content: {
-        "infraRsFuncToEpg": {
-          "attributes": {
-            "tDn": "uni/tn-irvsdc2/ap-irvsdc2-infra_ap/epg-vl697-10_95_19_96_27_epg",
-            "status": "created,modified",
-            "encap": "vlan-697"
-          },
-          "children": []
-        }
-      }
+  # - name: gap - rest-bind_aep_to_epg1
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
+  #     content: {
+  #       "infraRsFuncToEpg": {
+  #         "attributes": {
+  #           "tDn": "uni/tn-irvsdc2/ap-irvsdc2-infra_ap/epg-vl697-10_95_19_96_27_epg",
+  #           "status": "created,modified",
+  #           "encap": "vlan-697"
+  #         },
+  #         "children": []
+  #       }
+  #     }
   
-  - name: gap - rest-bind_aep_to_epg2
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
-      content: {
-        "infraRsFuncToEpg": {
-          "attributes": {
-            "tDn": "uni/tn-irvsdc2/ap-irvsdc2-infra_ap/epg-vl709-192_168_9_0_24_epg",
-            "status": "created,modified",
-            "encap": "vlan-709"
-          },
-          "children": []
-        }
-      }
+  # - name: gap - rest-bind_aep_to_epg2
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/infra/attentp-irvsdc2-fi1_aep/gen-default.json"
+  #     content: {
+  #       "infraRsFuncToEpg": {
+  #         "attributes": {
+  #           "tDn": "uni/tn-irvsdc2/ap-irvsdc2-infra_ap/epg-vl709-192_168_9_0_24_epg",
+  #           "status": "created,modified",
+  #           "encap": "vlan-709"
+  #         },
+  #         "children": []
+  #       }
+  #     }
 
-  - name: gap - bind l3out to vrf
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out.json"
-      content: {
-        "l3extOut": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out",
-            "status": "modified"
-          },
-          "children": [
-            {
-              "l3extRsEctx": {
-                "attributes": {
-                  "tnFvCtxName": "main_vrf"
-                },
-                "children": []
-              }
-            }
-          ]
-        }
-      }
+  # !!! found out this is not a gap - 2020.07.12
+  # - name: gap - bind l3out to vrf
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out.json"
+  #     content: {
+  #       "l3extOut": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out",
+  #           "status": "modified"
+  #         },
+  #         "children": [
+  #           {
+  #             "l3extRsEctx": {
+  #               "attributes": {
+  #                 "tnFvCtxName": "main_vrf"
+  #               },
+  #               "children": []
+  #             }
+  #           }
+  #         ]
+  #       }
+  #     }
 
-  - name: gap - bind l3out to l3dom
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out.json"
-      content: {
-        "l3extOut": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out",
-            "status": "modified"
-          },
-          "children": [
-            {
-              "l3extRsL3DomAtt": {
-                "attributes": {
-                  "tDn": "uni/l3dom-irvsdc2-isn_l3dom",
-                  "status": "created,modified"
-                },
-                "children": []
-              }
-            }
-          ]
-        }
-      }
+  # - name: gap - bind l3out to l3dom
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out.json"
+  #     content: {
+  #       "l3extOut": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out",
+  #           "status": "modified"
+  #         },
+  #         "children": [
+  #           {
+  #             "l3extRsL3DomAtt": {
+  #               "attributes": {
+  #                 "tDn": "uni/l3dom-irvsdc2-isn_l3dom",
+  #                 "status": "created,modified"
+  #               },
+  #               "children": []
+  #             }
+  #           }
+  #         ]
+  #       }
+  #     }
 
-  - name: gap - enable ospf on l3out
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/ospfExtP.json"
-      content: {
-        "ospfExtP": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/ospfExtP",
-            "areaId": "65201",
-            "status": "created,modified",
-            "areaType": "nssa"
-          },
-          "children": []
-        }
-      }
+  # - name: gap - enable ospf on l3out
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/ospfExtP.json"
+  #     content: {
+  #       "ospfExtP": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/ospfExtP",
+  #           "areaId": "65201",
+  #           "status": "created,modified",
+  #           "areaType": "nssa"
+  #         },
+  #         "children": []
+  #       }
+  #     }
 
-  - name: gap - set svi ip address in logical interface profile for isn1
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]].json"
-      content: {
-        "l3extRsPathL3OutAtt": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
-            #"mac": "00:22:BD:F8:19:FF",
-            "ifInstT": "ext-svi",
-            "encap": "vlan-102",
-            "mtu": "9216",
-            "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]",
-            "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
-            "status": "created,modified"
-          },
-          "children": [
-            {
-              "l3extMember": {
-                "attributes": {
-                  "addr": "192.168.254.17/29",
-                  "status": "created,modified",
-                  "side": "A"
-                },
-                "children": []
-              }
-            },
-            {
-              "l3extMember": {
-                "attributes": {
-                  "side": "B",
-                  "addr": "192.168.254.18/29",
-                  "status": "created,modified"
-                },
-                "children": []
-              }
-            }
-          ]
-        }
-      }
+  # - name: gap - set svi ip address in logical interface profile for isn1
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]].json"
+  #     content: {
+  #       "l3extRsPathL3OutAtt": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
+  #           #"mac": "00:22:BD:F8:19:FF",
+  #           "ifInstT": "ext-svi",
+  #           "encap": "vlan-102",
+  #           "mtu": "9216",
+  #           "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]",
+  #           "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
+  #           "status": "created,modified"
+  #         },
+  #         "children": [
+  #           {
+  #             "l3extMember": {
+  #               "attributes": {
+  #                 "addr": "192.168.254.17/29",
+  #                 "status": "created,modified",
+  #                 "side": "A"
+  #               },
+  #               "children": []
+  #             }
+  #           },
+  #           {
+  #             "l3extMember": {
+  #               "attributes": {
+  #                 "side": "B",
+  #                 "addr": "192.168.254.18/29",
+  #                 "status": "created,modified"
+  #               },
+  #               "children": []
+  #             }
+  #           }
+  #         ]
+  #       }
+  #     }
 
-  - name: gap - set svi ip address in logical interface profile for isn2
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]].json"
-      content: {
-        "l3extRsPathL3OutAtt": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
-            #"mac": "00:22:BD:F8:19:FF",
-            "ifInstT": "ext-svi",
-            "encap": "vlan-103",
-            "mtu": "9216",
-            "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]",
-            "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
-            "status": "created,modified"
-          },
-          "children": [
-            {
-              "l3extMember": {
-                "attributes": {
-                  "addr": "192.168.254.33/29",
-                  "status": "created,modified",
-                  "side": "A"
-                },
-                "children": []
-              }
-            },
-            {
-              "l3extMember": {
-                "attributes": {
-                  "side": "B",
-                  "addr": "192.168.254.34/29",
-                  "status": "created,modified"
-                },
-                "children": []
-              }
-            }
-          ]
-        }
-      }
+  # - name: gap - set svi ip address in logical interface profile for isn2
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]].json"
+  #     content: {
+  #       "l3extRsPathL3OutAtt": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
+  #           #"mac": "00:22:BD:F8:19:FF",
+  #           "ifInstT": "ext-svi",
+  #           "encap": "vlan-103",
+  #           "mtu": "9216",
+  #           "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]",
+  #           "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
+  #           "status": "created,modified"
+  #         },
+  #         "children": [
+  #           {
+  #             "l3extMember": {
+  #               "attributes": {
+  #                 "addr": "192.168.254.33/29",
+  #                 "status": "created,modified",
+  #                 "side": "A"
+  #               },
+  #               "children": []
+  #             }
+  #           },
+  #           {
+  #             "l3extMember": {
+  #               "attributes": {
+  #                 "side": "B",
+  #                 "addr": "192.168.254.34/29",
+  #                 "status": "created,modified"
+  #               },
+  #               "children": []
+  #             }
+  #           }
+  #         ]
+  #       }
+  #     }
 
-  - name: create ospf interface profile, attach to logical interface profile, bind with ospf policy
-    aci_rest:
-      <<: *aci_login
-      method: "post"
-      path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/ospfIfP.json"
-      content: {
-        "ospfIfP": {
-          "attributes": {
-            "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/ospfIfP",
-            "rn": "ospfIfP",
-            "status": "created,modified"
-          },
-          "children": [
-            {
-              "ospfRsIfPol": {
-                "attributes": {
-                  "tnOspfIfPolName": "irvsdc2-isn-main_ospfintfpol",
-                  "status": "created,modified"
-                },
-                "children": []
-              }
-            }
-          ]
-        }
-      }
+  # - name: create ospf interface profile, attach to logical interface profile, bind with ospf policy
+  #   aci_rest:
+  #     <<: *aci_login
+  #     method: "post"
+  #     path: "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/ospfIfP.json"
+  #     content: {
+  #       "ospfIfP": {
+  #         "attributes": {
+  #           "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/ospfIfP",
+  #           "rn": "ospfIfP",
+  #           "status": "created,modified"
+  #         },
+  #         "children": [
+  #           {
+  #             "ospfRsIfPol": {
+  #               "attributes": {
+  #                 "tnOspfIfPolName": "irvsdc2-isn-main_ospfintfpol",
+  #                 "status": "created,modified"
+  #               },
+  #               "children": []
+  #             }
+  #           }
+  #         ]
+  #       }
+  #     }

@@ -53,8 +53,51 @@ resource "aci_l3_outside" "irvsdc2-main_l3out" {
   relation_l3ext_rs_l3_dom_att = aci_l3_domain_profile.irvsdc2-isn_l3dom.id
 }
 
-# !!! gap - bind l3out to vrf - address in -rest.tf
 # !!! gap - bind l3out to l3dom - address in -rest.tf
+resource "aci_rest" "rest_irvsdc2-main_l3out_to_irvsdc2-isn_l3dom" {
+  path       = "/api/node/mo/${aci_l3_outside.irvsdc2-main_l3out.id}.json"
+  payload    = <<EOF
+  {
+    "l3extOut": {
+      "attributes": {
+        "dn": "${aci_l3_outside.irvsdc2-main_l3out.id}",
+        "status": "modified"
+      },
+      "children": [
+        {
+          "l3extRsL3DomAtt": {
+            "attributes": {
+              "tDn": "${aci_l3_domain_profile.irvsdc2-isn_l3dom.id}",
+              "status": "created,modified"
+            },
+            "children": []
+          }
+        }
+      ]
+    }
+  }
+  EOF
+  depends_on = [aci_l3_outside.irvsdc2-main_l3out]
+}
+
+# !!! gap - enable ospf on l3out
+resource "aci_rest" "rest_enable_ospf_on_irvsdc2-main_l3out" {
+  path       = "/api/node/mo/${aci_l3_outside.irvsdc2-main_l3out.id}/ospfExtP.json"
+  payload    = <<EOF
+  {
+    "ospfExtP": {
+      "attributes": {
+        "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/ospfExtP",
+        "areaId": "65201",
+        "status": "created,modified",
+        "areaType": "nssa"
+      },
+      "children": []
+    }
+  }
+  EOF
+  depends_on = [aci_l3_outside.irvsdc2-main_l3out]
+}
 
 resource "aci_logical_node_profile" "leaf-201-202" {
   l3_outside_dn = aci_l3_outside.irvsdc2-main_l3out.id
@@ -94,10 +137,123 @@ resource "aci_ospf_interface_policy" "irvsdc2-isn-main_ospfintfpol" {
   cost      = "50000"
 }
 
-# !!! address these in -rest.tf
-# !!! gap - also don't know how to enable ospf on l3out
+# !!! gap - create ospf interface profile, attach to logical interface profile, bind with ospf policy
+resource "aci_rest" "rest_create_ospf_intf_profile_and_attach_policy" {
+  path       = "/api/node/mo/${aci_logical_interface_profile.e41-42.id}/ospfIfP.json"
+  payload    = <<EOF
+  {
+    "ospfIfP": {
+      "attributes": {
+        "dn": "${aci_logical_interface_profile.e41-42.id}/ospfIfP",
+        "rn": "ospfIfP",
+        "status": "created,modified"
+      },
+      "children": [
+        {
+          "ospfRsIfPol": {
+            "attributes": {
+              "tnOspfIfPolName": "${aci_ospf_interface_policy.irvsdc2-isn-main_ospfintfpol.name}",
+              "status": "created,modified"
+            },
+            "children": []
+          }
+        }
+      ]
+    }
+  }
+  EOF
+  depends_on = [aci_logical_interface_profile.e41-42, aci_ospf_interface_policy.irvsdc2-isn-main_ospfintfpol]
+}
+
+
 # !!! gap - don't know how to set svi ip address in logical interface profile
-# !!! gap - no ospf interface profile so can't attach ospf interface policy to logical interface profile
+# HARDCODED!!!
+resource "aci_rest" "rest_set_svi_on_irvsdc2-isn1" {
+  path       = "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]].json"
+  payload    = <<EOF
+  {
+    "l3extRsPathL3OutAtt": {
+      "attributes": {
+        "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
+        "ifInstT": "ext-svi",
+        "encap": "vlan-102",
+        "mtu": "9216",
+        "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]",
+        "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn1_vpcipg]]",
+        "status": "created,modified"
+      },
+      "children": [
+        {
+          "l3extMember": {
+            "attributes": {
+              "addr": "192.168.254.17/29",
+              "status": "created,modified",
+              "side": "A"
+            },
+            "children": []
+          }
+        },
+        {
+          "l3extMember": {
+            "attributes": {
+              "side": "B",
+              "addr": "192.168.254.18/29",
+              "status": "created,modified"
+            },
+            "children": []
+          }
+        }
+      ]
+    }
+  }
+  EOF
+  depends_on = [aci_logical_interface_profile.e41-42]
+}
+
+resource "aci_rest" "rest_set_svi_on_irvsdc2-isn2" {
+  path       = "/api/node/mo/uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]].json"
+  payload    = <<EOF
+  {
+    "l3extRsPathL3OutAtt": {
+      "attributes": {
+        "dn": "uni/tn-irvsdc2/out-irvsdc2-main_l3out/lnodep-leaf-201-202/lifp-e41-42/rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
+        #"mac": "00:22:BD:F8:19:FF",
+        "ifInstT": "ext-svi",
+        "encap": "vlan-103",
+        "mtu": "9216",
+        "tDn": "topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]",
+        "rn": "rspathL3OutAtt-[topology/pod-1/protpaths-201-202/pathep-[irvsdc2-isn2_vpcipg]]",
+        "status": "created,modified"
+      },
+      "children": [
+        {
+          "l3extMember": {
+            "attributes": {
+              "addr": "192.168.254.33/29",
+              "status": "created,modified",
+              "side": "A"
+            },
+            "children": []
+          }
+        },
+        {
+          "l3extMember": {
+            "attributes": {
+              "side": "B",
+              "addr": "192.168.254.34/29",
+              "status": "created,modified"
+            },
+            "children": []
+          }
+        }
+      ]
+    }
+  }
+  EOF
+  depends_on = [aci_logical_interface_profile.e41-42]
+}
+
+
 
 #===== on to external EPG
 resource "aci_external_network_instance_profile" "irvsdc2-main_l3outepg" {
@@ -113,6 +269,15 @@ resource "aci_l3_ext_subnet" "irvsdc2-main_l3outepg_default_subnet" {
   external_network_instance_profile_dn = aci_external_network_instance_profile.irvsdc2-main_l3outepg.id
   ip                                   = "0.0.0.0/0"
 }
+
+
+
+
+
+
+
+
+
 
 #===== on to overlay policies
 
@@ -158,6 +323,8 @@ resource "aci_filter_entry" "ip_traffic" {
   ether_t   = "ip"
 }
 
+#=== adding first infra EPG
+
 resource "aci_application_epg" "vl697-10_95_19_96_27_epg" {
   application_profile_dn = aci_application_profile.irvsdc2-infra_ap.id
   name                   = "vl697-10_95_19_96_27_epg"
@@ -167,6 +334,20 @@ resource "aci_application_epg" "vl697-10_95_19_96_27_epg" {
   relation_fv_rs_cons = [aci_contract.unimatrix0.id]
   # bind this epg to physical domain
   relation_fv_rs_dom_att = [aci_physical_domain.irvsdc2_physdom.id]
+}
+
+# !!! gap - attempting to address tf gap with aci_rest
+# must taint with: before apply
+# > terraform taint aci_rest.bind_vl697epg_to_aep
+resource "aci_rest" "bind_vl697epg_to_aep" {
+  path       = "/api/node/mo/${aci_attachable_access_entity_profile.irvsdc2-fi1_aep.id}/gen-default.json"
+  class_name = "infraRsFuncToEpg"
+  content = {
+    "tDn" : aci_application_epg.vl697-10_95_19_96_27_epg.id,
+    "status" : "created,modified"
+    "encap" : "vlan-697"
+  }
+  depends_on = [aci_application_epg.vl697-10_95_19_96_27_epg, aci_attachable_access_entity_profile.irvsdc2-fi1_aep]
 }
 
 #=== adding vMotion BD & EPG: vl709-192_168_9_0_24_epg
@@ -194,6 +375,20 @@ resource "aci_application_epg" "vl709-192_168_9_0_24_epg" {
   relation_fv_rs_cons = [aci_contract.unimatrix0.id]
   # bind this epg to physical domain
   relation_fv_rs_dom_att = [aci_physical_domain.irvsdc2_physdom.id]
+}
+
+# !!! gap - attempting to address tf gap with aci_rest
+# must taint with: before apply
+# > terraform taint aci_rest.bind_vl697epg_to_aep
+resource "aci_rest" "bind_vl709epg_to_aep" {
+  path       = "/api/node/mo/${aci_attachable_access_entity_profile.irvsdc2-fi1_aep.id}/gen-default.json"
+  class_name = "infraRsFuncToEpg"
+  content = {
+    "tDn" : aci_application_epg.vl709-192_168_9_0_24_epg.id,
+    "status" : "created,modified"
+    "encap" : "vlan-697"
+  }
+  depends_on = [aci_application_epg.vl709-192_168_9_0_24_epg, aci_attachable_access_entity_profile.irvsdc2-fi1_aep]
 }
 
 #=== sample 3-tier EPG below
