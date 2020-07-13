@@ -253,8 +253,6 @@ resource "aci_rest" "rest_set_svi_on_irvsdc2-isn2" {
   depends_on = [aci_logical_interface_profile.e41-42]
 }
 
-
-
 #===== on to external EPG
 resource "aci_external_network_instance_profile" "irvsdc2-main_l3outepg" {
   l3_outside_dn       = aci_l3_outside.irvsdc2-main_l3out.id
