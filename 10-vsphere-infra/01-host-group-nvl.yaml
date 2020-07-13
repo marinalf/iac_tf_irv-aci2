@@ -1,0 +1,40 @@
+# !!! incomplete
+# seems like the only way to touch every host is through inventory file
+# there's option to use dynamic inventory module but that's too much time
+---
+- hosts: localhost
+  gather_facts: yes
+  vars:
+    vc_login: &vc_login
+      hostname: "irvsdc2-vc1.cisco.com"
+      username: "administrator@irvsdc.local"
+      password: "Admin1234$"
+      validate_certs: no
+
+  tasks:
+  # - name: create portgroup nVL500
+  #   vmware_portgroup:
+  #     <<: *vc_login
+  #     cluster_name: "IRVSDC2_CL1"
+  #     switch: "vSwitch0"
+  #     state: "absent"
+  #     portgroup: "nVL500"
+  #     vlan_id: "500"
+  #     security:
+  #       promiscuous_mode: true
+  #       mac_changes: false
+  #       forged_transmits: false
+      
+  - name: get cluster information
+    vmware_cluster_info:
+      <<: *vc_login
+      cluster_name: "IRVSDC2_CL1"
+      datacenter: "IRVSDC2"
+    register: cluster_info
+
+  # - name: adjust vSwitch0 parameters
+  #   vmware_vswitch:
+  
+  - debug:
+      msg: "{{ cluster_info }}"
+      verbosity: 3
