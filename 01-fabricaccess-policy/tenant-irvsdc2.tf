@@ -270,16 +270,8 @@ resource "aci_l3_ext_subnet" "irvsdc2-main_l3outepg_default_subnet" {
   ip                                   = "0.0.0.0/0"
 }
 
-
-
-
-
-
-
-
-
-
-#===== on to overlay policies
+#=====================================
+#===== on to overlay policies, default
 
 resource "aci_bridge_domain" "vl697-10_95_19_96_27_bd" {
   tenant_dn                = aci_tenant.irvsdc2.id
@@ -293,6 +285,8 @@ resource "aci_subnet" "vl697-10_95_19_97_27_subnet" {
   ip               = "10.95.19.97/27"
   scope            = "public"
 }
+
+#===== then segmentation policy, default
 
 resource "aci_application_profile" "irvsdc2-infra_ap" {
   tenant_dn = aci_tenant.irvsdc2.id
