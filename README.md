@@ -12,14 +12,11 @@ Currently being tested on following environment:
 - Ansible 2.9.10* (no longer used as of 0.1.1)
 - Running on MacOS Catalina / Homebrew
 
-In the current version most of the Terraform codes are in 01-underlay-policy folder.
-Gaps in Terraform provider are being addressed with aci_rest module.
+In the current version all of the Terraform codes are in 01-underlay-policy folder.
 
 *2020.07.13 - migrated terraform gap to Terraform aci_rest provider. We can now run entirely on Terraform with one caveat: aci_rest call doesn't seem to properly keep states, meaning out-of-band changes won't get updated. Workaround is to taint those aci_rest instances before terraform apply. "tf-taint.sh" script is provided for this purpose.*
 
-Identified gaps are noted throughout the code where they are found. Notably:
-
-System policy
+System policy - these are done manually.
 - route reflector policy
 - OOB management IP address
 - DNS policy
@@ -27,7 +24,7 @@ System policy
 - NTP policy
 - Port profile - to set some of 40G ports to downlinks
 
-Fabric access policy
+Fabric access policy - these actions are being driven by aci_rest resources
 - binding epg under AEP
 - bind l3out to vrf
 - bind l3out to l3dom
