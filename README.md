@@ -1,23 +1,23 @@
-# Sample Terraform code to drive APIC controller
+# Sample Terraform code to drive an ACI fabric
 
 Started: 2020.06.25
 
 ## Overview
 
-This is an ongoing attempt to drive the fabric entirely as code by working on this prototype.
+Sample Terraform code to drive ACI fabric from a near-empty state to forwarding traffic over l3Out.
+
 Currently being tested on following environment: 
+- APIC version 4.2(4i).
+- Terraform v0.12.28 - provider.aci v0.3.1
+- Ansible 2.9.10* (no longer used as of 0.1.1)
+- Running on MacOS Catalina / Homebrew
 
-APIC version 4.2(4i).
-Terraform v0.12.28 - provider.aci v0.3.1
-Ansible 2.9.10*
-Running on MacOS Catalina / Homebrew
-
-Most of the Terraform code is still in 01-underlay-policy folder. Current idea is to separate underlay and overlay/segmentation policy to isolate changes and impact while keep the code managable. Downside is that overlay policy will need to pull out existing policy e.g. l3Out in order to reference to it. Still experimenting with this idea.
-Gaps in Terraform provider are being filled with aci_rest module.
+In the current version most of the Terraform codes are in 01-underlay-policy folder.
+Gaps in Terraform provider are being addressed with aci_rest module.
 
 *2020.07.13 - migrated terraform gap to Terraform aci_rest provider. We can now run entirely on Terraform with one caveat: aci_rest call doesn't seem to properly keep states, meaning out-of-band changes won't get updated. Workaround is to taint those aci_rest instances before terraform apply. "tf-taint.sh" script is provided for this purpose.*
 
-Identified gaps are noted throughout the code where it is found. Notably:
+Identified gaps are noted throughout the code where they are found. Notably:
 
 System policy
 - route reflector policy
