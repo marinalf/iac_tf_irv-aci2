@@ -44,9 +44,7 @@ copy inventory-sample.yaml to inventory.yaml and edit APIC credentials
 
 ```bash
 (in 01-underlay-policy folder)
-$ ./tf-taint.sh
-$ terraform init
-$ terraform apply
+$ ./00update.sh
 
 (in ansible-gap folder) - no longer needed
 $ ansible-playbook -i inventory.yaml 01-tfgap.yaml
