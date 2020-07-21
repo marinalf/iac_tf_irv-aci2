@@ -39,13 +39,10 @@ Fabric access policy
 Terraform - in 01-underlay-policy folder
 copy main.auto-sample.tfvars to main.auto.tfvars and populate APIC credentials
 
-Ansible: - in ansible-gap folder - no longer needed
+Ansible code to address the gap is available in 00-obsoleted folder. To use:
 copy inventory-sample.yaml to inventory.yaml and edit APIC credentials
 
 ```bash
 (in 01-underlay-policy folder)
 $ ./00update.sh
-
-(in ansible-gap folder) - no longer needed
-$ ansible-playbook -i inventory.yaml 01-tfgap.yaml
 ```
